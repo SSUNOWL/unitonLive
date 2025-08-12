@@ -127,14 +127,18 @@ async function fetchAndProcessData(_id, uniqueNo, name) {
         console.log(response.data.TargetMessage)
         if(response.data.TargetMessage != "해당 등기신청사건이 존재하지 않습니다." || response.data.TargetMessage == undefined) {
             let insertLog = await db.collection('log').insertOne({
-                userId : new ObjectId(_id),                
+                userId : new ObjectId(_id),
+                uniqueNo : uniqueNo,
+                name : name,     
                 time : now,
                 submit : true
             })
             return true
         } else{
             let insertLog = await db.collection('log').insertOne({
-                userId : new ObjectId(_id),                
+                userId : new ObjectId(_id),  
+                uniqueNo : uniqueNo,
+                name : name,     
                 time : now,
                 submit : false
             })
