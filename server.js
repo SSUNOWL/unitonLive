@@ -130,29 +130,45 @@ async function fetchAndProcessData(email, uniqueNo, name) {
             hour12: false, // ✅ 24시간제 사용
         }).format(date);
         
-        // const resultPath = path.join(__dirname, now+'.txt');
-        // fs.writeFileSync(resultPath, JSON.stringify(response.data, null, 2), 'utf-8');
-        // console.log(`\n결과가 ${resultPath} 파일에 저장되었습니다.`);
-        console.log(response.data.TargetMessage)
-        if(response.data.TargetMessage != "해당 등기신청사건이 존재하지 않습니다." || response.data.TargetMessage == undefined) {
-            let insertLog = await db.collection('log').insertOne({
-                email : email,
-                uniqueNo : uniqueNo,
-                name : name,     
-                time : time,
-                submit : '감지'
-            })
-            return true
-        } else{
+        console.log(response.data)
+        if ( response.data.Result == null){
             let insertLog = await db.collection('log').insertOne({
                 email : email, 
                 uniqueNo : uniqueNo,
                 name : name,     
                 time : time,
-                submit : '없음'
+                submit : false
             })
             return false
-        }
+        } else {
+            var ResultList = response.data.Result
+            var Case = ResultList[ResultList.length - 1]
+            if (Case.CheoliSangtae == '각하' || Case.CheoliSangtae == '취하') {
+                    let insertLog = await db.collection('log').insertOne({
+                    email : email,
+                    uniqueNo : uniqueNo,
+                    name : name,     
+                    time : time,
+                    submit : false,
+                    purpose : Case.DeunggiMogjeog.replace(/ /g,""),
+                    status : Case.CheoliSangtae.replace(/ /g,"")
+                })
+                return false
+            } else {
+                let insertLog = await db.collection('log').insertOne({
+                    email : email,
+                    uniqueNo : uniqueNo,
+                    name : name,     
+                    time : time,
+                    submit : true,
+                    purpose : Case.DeunggiMogjeog.replace(/ /g,""),
+                    status : Case.CheoliSangtae.replace(/ /g,"")
+                })
+                await sendEmail(email, purpose, status)
+
+            }
+            return true
+        }  
     } catch (error) {
         console.error('\n오류가 발생했습니다:', error.response?.data || error.message);
         return false
@@ -160,7 +176,26 @@ async function fetchAndProcessData(email, uniqueNo, name) {
     
 };
 
+async function sendEmail(email, purpose, status) {
+    url = 'http://3.39.231.53:8080/api/emails/notice'
+    redirectURL = `http://localhost:3000/Solution?purpose=${purpose}&status=${status}`
+    requestData = {
+        email : email,
+        redirectUrl : redirectURL
+    }
+    requestHeaders = {
+        "accept": "*/*",
+        "Content-Type": "application/json"
+    }
+    const response = await axios.post(url, requestData, { headers: requestHeaders });
+    return response
 
+}
+
+app.get('/send', async(req, res) => {
+    await sendEmail("sunj0321@naver.com", "근저당권", "처리완료")
+
+})
 
 async function emailList() {
     try{
@@ -171,6 +206,7 @@ async function emailList() {
             console.log(result[i].name)
             if(await fetchAndProcessData(result[i].email, result[i].uniqueNo, result[i].name)) {
                 console.log(result[i].email + "문제 발생 이메일 보냄")
+                //백한테 email정보랑, 링크주소 (localhost:3000/Live/email 이렇게? 생각함)
                 sum = sum +1
             } else{
                 console.log('문제없음')
@@ -194,7 +230,7 @@ let pollingInterval; // setInterval의 ID를 저장할 변수
 
 // 주기적 조회를 시작하는 라우트
 app.get('/start', (req, res) => {
-    if (pollingInterval) {
+    if (pollingInterval) {  
         return res.send('이미 주기적 조회가 실행 중입니다.');
     }
 
@@ -269,6 +305,7 @@ app.post('/log', async(req, res) => {
 
 
 let connectDB = require('./database.js');
+const send = require('send');
 
 let db
 
