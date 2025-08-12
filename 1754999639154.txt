@@ -1,0 +1,12 @@
+{
+  "Result": null,
+  "ApiTxKey": "4d99a7ad-9c68-4fa2-8d68-64670056621e",
+  "Status": "Error",
+  "StatusSeq": 1,
+  "ErrorCode": 8801004,
+  "Message": "대상 서버에서 오류가 전송되었습니다.",
+  "ErrorLog": null,
+  "TargetCode": "pr10.message.info.biz.sprt.0204",
+  "TargetMessage": "해당 등기신청사건이 존재하지 않습니다.",
+  "PointBalance": "9620.00"
+}
