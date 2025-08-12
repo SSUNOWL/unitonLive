@@ -118,11 +118,20 @@ async function fetchAndProcessData(_id, uniqueNo, name) {
         console.log('Response:', JSON.stringify(response.data, null, 2));
 
         // 6. 결과 파일로 저장
-        var time = new Date();
-        var now = (time.getMonth() + 1).toString()+"," + time.getDate().toString()+"," + time.getHours().toString() +"," + time.getMinutes().toString()
+        const date = new Date
+        const time = new Intl.DateTimeFormat('ko-KR', {
+            timeZone: 'Asia/Seoul',  // ✅ KST 적용
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false, // ✅ 24시간제 사용
+        }).format(date);
         
-        const resultPath = path.join(__dirname, now+'.txt');
-        fs.writeFileSync(resultPath, JSON.stringify(response.data, null, 2), 'utf-8');
+        // const resultPath = path.join(__dirname, now+'.txt');
+        // fs.writeFileSync(resultPath, JSON.stringify(response.data, null, 2), 'utf-8');
         // console.log(`\n결과가 ${resultPath} 파일에 저장되었습니다.`);
         console.log(response.data.TargetMessage)
         if(response.data.TargetMessage != "해당 등기신청사건이 존재하지 않습니다." || response.data.TargetMessage == undefined) {
@@ -130,7 +139,7 @@ async function fetchAndProcessData(_id, uniqueNo, name) {
                 userId : new ObjectId(_id),
                 uniqueNo : uniqueNo,
                 name : name,     
-                time : now,
+                time : time,
                 submit : true
             })
             return true
@@ -139,7 +148,7 @@ async function fetchAndProcessData(_id, uniqueNo, name) {
                 userId : new ObjectId(_id),  
                 uniqueNo : uniqueNo,
                 name : name,     
-                time : now,
+                time : time,
                 submit : false
             })
             return false
@@ -252,7 +261,6 @@ app.post('/log', async(req, res) => {
 
 
 let connectDB = require('./database.js');
-const { time, Console } = require("console");
 
 let db
 let changeStream
