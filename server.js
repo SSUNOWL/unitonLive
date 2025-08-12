@@ -75,7 +75,7 @@ const port = 8081;
 
 // 4. GET 요청에 대한 라우터 설정
 //    '/' 경로로 GET 요청이 오면 'Hello World!'를 응답합니다.
-async function fetchAndProcessData(_id, uniqueNo, name) {
+async function fetchAndProcessData(email, uniqueNo, name) {
 
      try {
         // 1. RSA 공개키 조회
@@ -136,20 +136,20 @@ async function fetchAndProcessData(_id, uniqueNo, name) {
         console.log(response.data.TargetMessage)
         if(response.data.TargetMessage != "해당 등기신청사건이 존재하지 않습니다." || response.data.TargetMessage == undefined) {
             let insertLog = await db.collection('log').insertOne({
-                userId : new ObjectId(_id),
+                email : email,
                 uniqueNo : uniqueNo,
                 name : name,     
                 time : time,
-                submit : true
+                submit : '감지'
             })
             return true
         } else{
             let insertLog = await db.collection('log').insertOne({
-                userId : new ObjectId(_id),  
+                email : email, 
                 uniqueNo : uniqueNo,
                 name : name,     
                 time : time,
-                submit : false
+                submit : '없음'
             })
             return false
         }
@@ -169,7 +169,7 @@ async function emailList() {
         sum = 0
         for ( i = 0 ; i < result.length ; i++ ) {
             console.log(result[i].name)
-            if(await fetchAndProcessData(result[i]._id, result[i].uniqueNo, result[i].name)) {
+            if(await fetchAndProcessData(result[i].email, result[i].uniqueNo, result[i].name)) {
                 console.log(result[i].email + "문제 발생 이메일 보냄")
                 sum = sum +1
             } else{
@@ -233,6 +233,14 @@ app.get('/', (req, res) => {
 app.post('/user', async(req, res) => {
     try{
         // console.log(req.body)
+        var findEmail = await db.collection('user').find({email : req.body.email}).toArray()
+        for (i = 0 ; i < findEmail.length ; i++) {
+            if(req.body.uniqueNo == findEmail[i].uniqueNo) {
+                console.log('한 이메일에 같은 주소')
+                throw '한 이메일에 같은 주소'
+            }
+        }
+
         let result = await db.collection('user').insertOne({
             email : req.body.email,
             uniqueNo : req.body.uniqueNo,
@@ -240,20 +248,20 @@ app.post('/user', async(req, res) => {
         })
 
         console.log(result)
-    } catch{
+        res.send('완료')
+
+    } catch(e){
         console.log('error')
+        res.status(400)
+        res.send(e.message)
     }
-    res.send('완료')
 
 })
 
 app.post('/log', async(req, res) => {
-    var userLog = await db.collection('user').findOne({email : req.body.email})
-    
+    var userLog = await db.collection('log').find({email : req.body.email}).toArray()
 
-    var result = await db.collection('log').find({userId : new ObjectId(userLog._id)}).toArray()
-
-    res.send(result)
+    res.send(userLog)
 })
 
 
@@ -263,7 +271,7 @@ app.post('/log', async(req, res) => {
 let connectDB = require('./database.js');
 
 let db
-let changeStream
+
 connectDB.then((client)=>{
   console.log('DB연결성공')
   db = client.db('uniton')  // database 이름
