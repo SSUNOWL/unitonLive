@@ -2,6 +2,8 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const { ObjectId } = require('mongodb')
+require('dotenv').config()
+
 
 // 1. 필요한 모듈 불러오기
 const axios = require('axios');
@@ -11,7 +13,7 @@ const path = require('path');
 
 // --- 설정값 ---
 const apiHost = 'https://api.tilko.net';
-const apiKey = 'ad5cf1467acf49978eb218e9bc8d1f7f';
+const apiKey = process.env.emdrl_api;
 // --- 설정값 끝 ---
 
 
@@ -91,8 +93,8 @@ async function fetchAndProcessData(_id, uniqueNo, name) {
         const url = `${apiHost}/api/v2.0/Iros2IdLogin/RetrieveApplCsprCsList`;
         const requestData = {
             Auth: {
-                UserId: aesEncrypt(aesKey, aesIv, "sun325"),
-                UserPassword: aesEncrypt(aesKey, aesIv, "ksj@~10905")
+                UserId: aesEncrypt(aesKey, aesIv, process.env.emdrl_ID),
+                UserPassword: aesEncrypt(aesKey, aesIv, process.env.emdrl_PW)
             },
             Pin: uniqueNo,
             A103Name: name,
@@ -133,9 +135,11 @@ async function fetchAndProcessData(_id, uniqueNo, name) {
                 time : now,
                 submit : false
             })
+            return false
         }
     } catch (error) {
         console.error('\n오류가 발생했습니다:', error.response?.data || error.message);
+        return false
     }
     
 };
