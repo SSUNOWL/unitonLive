@@ -258,7 +258,11 @@ connectDB.then((client)=>{
 })
 
 
-// 5. 설정된 포트에서 서버를 실행하고, 실행되면 콘솔에 메시지를 출력합니다.
-app.listen(port, () => {
-  console.log(`서버가 http://localhost:${port} 에서 실행 중입니다.`);
+
+// Render가 제공하는 PORT 환경 변수를 사용하고, 없다면 3000번 포트를 사용
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`${PORT}번 포트에서 서버 실행 중...`);
 });
+
