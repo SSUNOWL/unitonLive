@@ -3,6 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const { ObjectId } = require('mongodb')
 require('dotenv').config()
+const cors = require('cors'); // 1. cors 패키지를 불러옵니다.
 
 
 // 1. 필요한 모듈 불러오기
@@ -66,6 +67,8 @@ async function getPublicKey() {
 
 // 2. Express 앱을 생성합니다.
 const app = express();
+app.use(cors());
+
 app.use(express.json());
 // 3. 포트 번호를 설정합니다.
 const port = 8081;
