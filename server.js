@@ -192,8 +192,28 @@ async function sendEmail(email, purpose, status) {
 
 }
 
-app.get('/send', async(req, res) => {
-    await sendEmail("sunj0321@naver.com", "근저당권", "처리완료")
+app.get('/send/:email/:name/:uniqueNo/:purpose/:status', async(req, res) => {
+    const date = new Date
+        const time = new Intl.DateTimeFormat('ko-KR', {
+            timeZone: 'Asia/Seoul',  // ✅ KST 적용
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false, // ✅ 24시간제 사용
+        }).format(date);
+    let insertLog = await db.collection('log').insertOne({
+        email : req.params.email,
+        uniqueNo : req.params.uniqueNo,
+        name : req.params.name,     
+        time : time,
+        submit : true,
+        purpose : req.params.purpose,
+        status : req.params.status
+    })
+    await sendEmail(req.params.email, req.params.purpose, req.params.status)
 
 })
 
@@ -323,7 +343,7 @@ connectDB.then((client)=>{
 
 
 // Render가 제공하는 PORT 환경 변수를 사용하고, 없다면 3000번 포트를 사용
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8081;
 
 app.listen(PORT, () => {
   console.log(`${PORT}번 포트에서 서버 실행 중...`);
