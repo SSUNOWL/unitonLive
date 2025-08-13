@@ -197,6 +197,8 @@ app.get('/send', async(req, res) => {
 
 })
 
+
+
 async function emailList() {
     try{
         var result = await db.collection('user').find().toArray()
@@ -229,22 +231,23 @@ app.get('/list', async(req, res) => {
 let pollingInterval; // setInterval의 ID를 저장할 변수
 
 // 주기적 조회를 시작하는 라우트
-app.get('/start', (req, res) => {
+app.get('/start/:time', (req, res) => {
     if (pollingInterval) {  
         return res.send('이미 주기적 조회가 실행 중입니다.');
     }
-
-    // 2분 간격으로 설정 (2 * 60 * 1000 ms)
-    const intervalMinutes = 2; 
-    console.log(`${intervalMinutes}분 간격으로 API 조회를 시작합니다.`);
+    var intervalSeconds
+    // 1초 간격으로 설정 (1 * 1000 ms)
+    if (req.params.time) {intervalSeconds = req.params.time; }
+    else intervalSeconds = 120;
+    console.log(`${intervalSeconds}분 간격으로 API 조회를 시작합니다.`);
     
     // 서버 시작 시 즉시 1회 실행
     emailList(); 
     
     // 이후 설정된 간격으로 주기적 실행
-    pollingInterval = setInterval(emailList, intervalMinutes * 60 * 1000);
+    pollingInterval = setInterval(emailList, intervalSeconds  * 1000);
     
-    res.send(`${intervalMinutes}분 간격으로 API 조회를 시작했습니다. 중지하려면 /stop을 호출하세요.`);
+    res.send(`${intervalSeconds}분 간격으로 API 조회를 시작했습니다. 중지하려면 /stop을 호출하세요.`);
 });
 
 // 주기적 조회를 중지하는 라우트
